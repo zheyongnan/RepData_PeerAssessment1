@@ -7,19 +7,72 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+Read data to R and change the date data type from Character to Date  
+```{r}
+data_act <- read.csv("activity.csv")
+data_act$date <- as.Date(data_act$date,"%Y-%m-%d")
+```
 
 ## What is mean total number of steps taken per day?
+```{r}
+step_day<-tapply(data_act$steps,data_act$date,sum)
+hist(step_day)
+summary(step_day)
+```
+
 
 
 
 ## What is the average daily activity pattern?
+```{r}
+t_inteval <- unique(data_act$interval)
+mean_steps_interval<-tapply(data_act$steps,data_act$interval,mean,na.rm=T)
+plot(t_inteval,mean_steps_interval,type = "l",las=1)
+t_inteval[mean_steps_interval == max(mean_steps_interval)]
+```
 
 
 
 ## Imputing missing values
+```{r}
+sum(is.na(data_act$steps))
+data_new <- data_act
+for(i in 1:length(data_act$steps)){
+    if(is.na(data_act$steps[i])){
+        data_new$steps[i] <-     mean_steps_interval[data_act$interval[i] == t_inteval]
+    }
+}
+step_day_new<-tapply(data_new$steps,data_new$date,sum)
+hist(step_day_new)
+summary(step_day_new)
+```
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+week_of_day <- rep("weekday",length(data_new$steps))
+for(i in 1:length((data_new$steps))){
+    if(weekdays(data_new$date[i])=="Saturday" | weekdays(data_new$date[i]) == "Sunday"){
+    week_of_day[i] <- "weekend"
+}
+}
+data_new <- cbind(data_new,week_of_day)
+weekday_data <- data_new[data_new$week_of_day == "weekday",]
+weekend_data <- data_new[data_new$week_of_day == "weekend",]
+mean_steps_interval_day<-tapply(weekday_data$steps,weekday_data$interval,mean)
+mean_steps_interval_end<-tapply(weekend_data$steps,weekend_data$interval,mean)
+data_final <- cbind(t_inteval,mean_steps_interval_day,mean_steps_interval_end)
+data_final <- as.data.frame(data_final)
+rownames(data_final) <- NULL
+plot(data_final$t_inteval,data_final$mean_steps_interval_day,col='blue',type = "l")
+plot(data_final$t_inteval,data_final$mean_steps_interval_end,col='blue',type = "l")
+```
+
+
+
+
+
+
+
+
